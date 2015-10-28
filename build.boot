@@ -10,7 +10,7 @@
 (bootlaces! +version+)
 
 (task-options!
-  pom  {:project     'adzerk/boot-cljs-repl
+  pom  {:project     'pandeiro/boot-cljs-repl
         :version     +version+
         :description "Boot task to provide a ClojureScript REPL."
         :url         "https://github.com/adzerk/boot-cljs-repl"
