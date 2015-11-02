@@ -76,14 +76,15 @@
     (make-repl-connect-file conn)))
 
 (defn- weasel-connection
-  [ip port ups-libs ups-foreign-libs pre-connect]
+  [ip port ups-libs ups-foreign-libs pre-connect output-dir]
   (apply (r weasel.repl.websocket/repl-env)
          :port port
          :ups-libs ups-libs
          :ups-foreign-libs ups-foreign-libs
          (concat
            (when ip [:ip ip])
-           (when pre-connect [:pre-connect pre-connect]))))
+           (when pre-connect [:pre-connect pre-connect])
+           (when output-dir [:output-dir output-dir]))))
 
 (defn- weasel-stop
   []
@@ -109,32 +110,36 @@
     :port    int   The port the websocket server will listen on.
     :ws-host str   Websocket host to connect to.
     :secure  bool  Flag to indicate whether to use a secure websocket."
-  [& {i :ip p :port secure :secure ws-host :ws-host}]
-  (let [i        (or i (:ws-ip @ws-settings))
-        p        (or p (:ws-port @ws-settings) 0)
-        ws-host  (or ws-host (:ws-host @ws-settings))
-        secure   (or secure (:secure @ws-settings))
-        clih     (or ws-host (if (and i (not= i "0.0.0.0")) i "localhost"))
-        ups-deps (get-upstream-deps)
-        repl-env (weasel-connection i p
-                   (:libs ups-deps) (:foreign-libs ups-deps)
-                   #(write-repl-connect-file clih secure))]
+  [& {i :ip p :port secure :secure ws-host :ws-host output-dir :output-dir}]
+  (let [i          (or i (:ws-ip @ws-settings))
+        p          (or p (:ws-port @ws-settings) 0)
+        ws-host    (or ws-host (:ws-host @ws-settings))
+        secure     (or secure (:secure @ws-settings))
+        output-dir (or output-dir (:output-dir @ws-settings))
+        clih       (or ws-host (if (and i (not= i "0.0.0.0")) i "localhost"))
+        ups-deps   (get-upstream-deps)
+        repl-env   (weasel-connection i p
+                     (:libs ups-deps) (:foreign-libs ups-deps)
+                     #(write-repl-connect-file clih secure)
+                     output-dir)]
     repl-env))
 
 (defn start-repl
   "Start the Weasel server and attach REPL client to running browser environment.
 
   Keyword Options:
-    :ip     str   The IP address the websocket server will listen on.
-    :port   int   The port the websocket server will listen on.
-    :ws-host str   Websocket host to connect to.
-    :secure  bool  Flag to indicate whether to use a secure websocket."
-  [& {i :ip p :port secure :secure ws-host :ws-host}]
-  (let [i    (or i (:ws-ip @ws-settings))
-        p    (or p (:ws-port @ws-settings) 0)
-        ws-host (or ws-host (:ws-host @ws-settings))
-        secure (or secure (:secure @ws-settings))]
-    ((r cemerick.piggieback/cljs-repl) (repl-env :ip i :port p :ws-host ws-host :secure secure))))
+    :ip         str   The IP address the websocket server will listen on.
+    :port       int   The port the websocket server will listen on.
+    :ws-host    str   Websocket host to connect to.
+    :secure     bool  Flag to indicate whether to use a secure websocket.
+    :output-dir str   The directory to output the REPL's cljs compilation."
+  [& {i :ip p :port secure :secure ws-host :ws-host output-dir :output-dir}]
+  (let [i          (or i (:ws-ip @ws-settings))
+        p          (or p (:ws-port @ws-settings) 0)
+        ws-host    (or ws-host (:ws-host @ws-settings))
+        secure     (or secure (:secure @ws-settings))
+        output-dir (or output-dir (:output-dir @ws-settings))]
+    ((r cemerick.piggieback/cljs-repl) (repl-env :ip i :port p :ws-host ws-host :secure secure :output-dir output-dir))))
 
 (defn- add-init!
   [in-file out-file]
@@ -166,7 +171,8 @@
    n nrepl-opts NREPL_OPTS edn "Options passed to the `repl` task."
    p port PORT             int "The port the websocket server listens on."
    w ws-host WSADDR        str "The (optional) websocket host address to pass to clients."
-   s secure                bool "Flag to indicate whether the client should connect via wss. Defaults to false."]
+   s secure                bool "Flag to indicate whether the client should connect via wss. Defaults to false."
+   o output-dir            str "The directory to output the REPL's cljs compilation"]
   (let [src (b/tmp-dir!)
         tmp (b/tmp-dir!)
         prev (atom nil)
@@ -180,6 +186,7 @@
     (when port (swap! ws-settings assoc :ws-port port))
     (when ws-host (swap! ws-settings assoc :ws-host ws-host))
     (when secure (swap! ws-settings assoc :secure secure))
+    (when output-dir (swap! ws-settings assoc :output-dir output-dir))
     (reset! out-file (io/file src "adzerk" "boot_cljs_repl.cljs"))
     (make-repl-connect-file nil)
     (util/dbug "Loaded REPL dependencies: %s\n" (pr-str (repl-deps)))
