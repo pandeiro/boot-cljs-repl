@@ -172,7 +172,7 @@
    p port PORT             int "The port the websocket server listens on."
    w ws-host WSADDR        str "The (optional) websocket host address to pass to clients."
    s secure                bool "Flag to indicate whether the client should connect via wss. Defaults to false."
-   o output-dir            str "The directory to output the REPL's cljs compilation"]
+   o output-dir OUTPUT     str "The directory to output the REPL's cljs compilation"]
   (let [src (b/tmp-dir!)
         tmp (b/tmp-dir!)
         prev (atom nil)
