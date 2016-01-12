@@ -2,7 +2,7 @@
 
 [](dependency)
 ```clojure
-[pandeiro/boot-cljs-repl "0.2.1-SNAPSHOT"] ;; latest release
+[pandeiro/boot-cljs-repl "0.2.2-SNAPSHOT"] ;; latest release
 ```
 [](/dependency)
 
